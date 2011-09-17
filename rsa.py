@@ -104,6 +104,8 @@ def gen_keys(k_min, k_max):
     q_key = wrap(b64num(n) + key_sp + b64num(e), llen)
     q_prv = wrap(b64num(n) + key_sp + b64num(d), llen)
 
+    print "OK, we've got you a new pair of keys."
+
     while True:
         usr_inp = raw_input("Save the keys to file (Y/n)? ")
         if usr_inp == "" or usr_inp == "y" or usr_inp == "Y":
