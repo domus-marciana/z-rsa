@@ -5,18 +5,25 @@ from textwrap import wrap
 import base64
 import sys
 
-llen = 50                                                         # Line length
-k = 10                                                            # Accuracy of the prime test
-key_min = 1<<1024                                                 # Lower bound of keys
-key_max = 1<<1025                                                 # Upper bound of keys
+llen = 50                                                            # Line length
+k = 10                                                               # Accuracy of the prime test
 
-begin_pub_msg = '=====BEGIN PUBLIC KEY BLOCK=====\n'
+# Our keys (p, q) range from 2^1024 to 2^1025.
+key_min = 1<<1024                                                    # Lower bound of keys
+key_max = 1<<1025                                                    # Upper bound of keys
+
+begin_pub_msg = '=====BEGIN PUBLIC KEY BLOCK=====\nZ-RSAv1\n'
 end_pub_msg   = '=====END PUBLIC KEY BLOCK=====\n'
-begin_prv_msg = '=====BEGIN PRIVATE KEY BLOCK=====\n'
+begin_prv_msg = '=====BEGIN PRIVATE KEY BLOCK=====\nZ-RSAv1\n'
 end_prv_msg   = '=====END PUBLIC KEY BLOCK=====\n'
-begin_cipher_msg = '=====BEGIN ENCIPHERED MESSAGE BLOCK=====\n'
-end_cipher_msg = '=====END ENCIPHERED MESSAGE BLOCK=====\n'
+begin_cipher_msg = '=====BEGIN CIPHERTEXT BLOCK=====\nZ-RSAv1\n'
+end_cipher_msg = '=====END CIPHERTEXT BLOCK=====\n'
 key_sp = '#####'
+
+# Miller-Rabin Primality Test
+
+# Sometimes this does not actually give us prime numbers! So pray
+# that it does not happen...
 
 def calc_sr(n):
 	n = n-1
@@ -53,8 +60,7 @@ def gcd(a, b):
         (a, b) = (b, a%b)
     return a
 
-def multinv(a, b):
-    print a,b
+def multinv(a, b):                                                   # Modular multiplicative inverse
     (x, lx) = (0, 1)
     while b != 0:
         q = a//b
@@ -95,8 +101,6 @@ def gen_keys(k_min, k_max):
     while d<0:
         d = d+phi
 
-    print (p, q, n, e, d)
-
     q_key = wrap(b64num(n) + key_sp + b64num(e), llen)
     q_prv = wrap(b64num(n) + key_sp + b64num(d), llen)
 
@@ -121,6 +125,10 @@ def gen_keys(k_min, k_max):
             return
         else:
             print "Invalid option. Enter Y or N.\n"
+
+# This padding scheme treats strings as numbers in base 256, where each digit is
+# the ASCII code of the character. We convert this number to an integer to enci-
+# pher it.
 
 def pad(msg):
     lmsg = map(ord, list(msg))
@@ -262,7 +270,8 @@ def dec_msg():
             print "Invalid option. Enter Y or N.\n"
 
 def main():
-    print "RSA Cryptosystem Implementation"
+    print "Z-RSA Cryptosystem Demonstration"
+    print "(C) 2011 Qiwei Zuo"
     while True:
         print "Main menu\n"
         print "1) Generate key pairs"
