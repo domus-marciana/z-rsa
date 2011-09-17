@@ -4,10 +4,9 @@ from random import randint
 from textwrap import wrap
 import base64
 import sys
+import argparse
 
-llen = 50                                                            # Line length
-k = 10                                                               # Accuracy of the prime test
-
+llen = 50                                                            # Line length k = 10                                                               # Accuracy of the prime test
 # Our keys (p, q) range from 2^1024 to 2^1025.
 key_min = 1<<1024                                                    # Lower bound of keys
 key_max = 1<<1025                                                    # Upper bound of keys
@@ -89,9 +88,19 @@ def b64num(num):
 def numb64(b64):
     return long(base64.b64decode(b64))
 
-def gen_keys(k_min, k_max):
-    print "Generating keys, please wait..."
-    print "This may take a long time, so get yourself a cup of coffee!"
+def ask_yn(prompt, default):
+    while True:
+        usr_inp = raw_input(prompt)
+        if usr_inp == "":
+            usr_inp = default
+        if usr_inp.upper() == "Y":
+            return True
+        elif usr_inp.upper() == "N":
+            return False
+        else:
+            print "Invalid option. Enter Y or N."
+
+def make_keys(k_min, k_max):
     p = rand_prime(k_min,k_max)
     q = rand_prime(k_min,k_max)
     n = p*q
@@ -104,29 +113,30 @@ def gen_keys(k_min, k_max):
     q_key = wrap(b64num(n) + key_sp + b64num(e), llen)
     q_prv = wrap(b64num(n) + key_sp + b64num(d), llen)
 
+    return (q_key, q_prv)
+
+def gen_keys(k_min, k_max):
+    print "Generating keys, please wait..."
+    print "This may take a long time, so get yourself a cup of coffee!"
+
+    (q_key, q_prv) = make_keys(k_min, k_max)
+
     print "OK, we've got you a new pair of keys."
 
-    while True:
-        usr_inp = raw_input("Save the keys to file (Y/n)? ")
-        if usr_inp == "" or usr_inp == "y" or usr_inp == "Y":
-            fname = raw_input("Enter public key file name: ")
-            f = open(fname, 'w')
-            f.write(begin_pub_msg)
-            for line in q_key:
-                f.write(line + '\n')
-            f.write(end_pub_msg)
-            fname = raw_input("Enter private key file name: ")
-            f = open(fname, 'w')
-            f.write(begin_prv_msg)
-            for line in q_prv:
-                f.write(line + '\n')
-            f.write(end_prv_msg)
-            print "Done! Keep your private key safe and give out your public key."
-            return
-        elif usr_inp == "n" or usr_inp == "N":
-            return
-        else:
-            print "Invalid option. Enter Y or N.\n"
+    if ask_yn("Save the keys to file (Y/n)? ", "Y"):
+        fname = raw_input("Enter public key file name: ")
+        f = open(fname, 'w')
+        f.write(begin_pub_msg)
+        for line in q_key:
+            f.write(line + '\n')
+        f.write(end_pub_msg)
+        fname = raw_input("Enter private key file name: ")
+        f = open(fname, 'w')
+        f.write(begin_prv_msg)
+        for line in q_prv:
+            f.write(line + '\n')
+        f.write(end_prv_msg)
+        print "Done! Keep your private key safe and give out your public key."
 
 # This padding scheme treats strings as numbers in base 256, where each digit is
 # the ASCII code of the character. We convert this number to an integer to enci-
@@ -142,38 +152,42 @@ def pad(msg):
     return result
 
 def read_key():
-    while True:
-        usr_inp = raw_input("Load public key from file (Y/n)? ")
-        if usr_inp == "" or usr_inp == "y" or usr_inp == "Y":
+    try:
+        if ask_yn("Load public key from file (Y/n)? ", "Y"):
             fname = raw_input("Enter public key file name: ")
             f = open(fname, 'r')
             pub = f.read().replace(begin_pub_msg, '').replace(end_pub_msg, '').replace('\n', '').split(key_sp)
             return map(numb64, pub)
-        elif usr_inp == "n" or usr_inp == "N":
+        else:
             print "Entering public key by hand (NOT RECOMMENDED!) Enter <c-d> after newline to terminate."
             return map(numb64, sys.stdin.read().replace(begin_pub_msg, '').
                     replace(end_pub_msg, '').replace('\n', '').split(key_sp))
-            break
-        else:
-            print "Invalid option. Enter Y or N.\n"
+    except IOError:
+        print "Error: File not found."
+    except (TypeError, ValueError):
+        print "Error: Could not read public key. Are you sure the key is properly formatted?"
+        raise
 
 def enc_msg():
     print "We need the public key of the recipient."
-    (n, e) = read_key()
-    while True:
-        usr_inp = raw_input("Load message to encipher from file (Y/n)? ")
-        if usr_inp == "" or usr_inp == "y" or usr_inp == "Y":
+
+    try:
+        (n, e) = read_key()
+    except:
+        return
+
+    if ask_yn("Load message to encipher from file (Y/n)? ", "Y"):
+        try:
             fname = raw_input("Enter message file name: ")
             f = open(fname, 'r')
             msg = f.read()
-            break
-        elif usr_inp == "n" or usr_inp == "N":
-            print "Reading message from command line. Enter <c-d> after newline to terminate."
-            msg = sys.stdin.read()
-            print
-            break
-        else:
-            print "Invalid option. Enter Y or N.\n"
+        except IOError:
+            print "Error: File not found."
+            return
+    else:
+        print "Reading message from command line. Enter <c-d> after newline to terminate."
+        msg = sys.stdin.read()
+        print
 
     print "Enciphering, please wait..."
     lenc = []
@@ -195,20 +209,13 @@ def enc_msg():
         print line
     print end_cipher_msg
 
-    while True:
-        usr_inp = raw_input("Save enciphered message to file (Y/n)? ")
-        if usr_inp == "" or usr_inp == "y" or usr_inp == "Y":
-            fname = raw_input("Enter file name: ")
-            f = open(fname, 'w')
-            f.write(begin_cipher_msg)
-            for line in q_enc:
-                f.write(line + '\n')
-            f.write(end_cipher_msg)
-            break
-        elif usr_inp == "n" or usr_inp == "N":
-            break
-        else:
-            print "Invalid option. Enter Y or N.\n"
+    if ask_yn("Save enciphered message to file (Y/n)? ", "Y"):
+        fname = raw_input("Enter file name: ")
+        f = open(fname, 'w')
+        f.write(begin_cipher_msg)
+        for line in q_enc:
+            f.write(line + '\n')
+        f.write(end_cipher_msg)
 
 def depad(num):
     lmsg = []
@@ -219,59 +226,60 @@ def depad(num):
     return ''.join(map(chr, lmsg))
 
 def read_prv():
-    while True:
-        usr_inp = raw_input("Load private key from file (Y/n)? ")
-        if usr_inp == "" or usr_inp == "y" or usr_inp == "Y":
+    try:
+        if ask_yn("Load private key from file (Y/n)? ", "Y"):
             fname = raw_input("Enter private key file name: ")
             f = open(fname, 'r')
             pub = f.read().replace(begin_prv_msg, '').replace(end_prv_msg, '').replace('\n', '').split(key_sp)
             return map(numb64, pub)
-        elif usr_inp == "n" or usr_inp == "N":
+        else:
             print "Entering private key by hand (NOT RECOMMENDED!) Enter <c-d> after newline to terminate."
             return map(numb64, sys.stdin.read().replace(begin_prv_msg, '').
                     replace(end_prv_msg, '').replace('\n', '').split(key_sp))
-            break
-        else:
-            print "Invalid option. Enter Y or N.\n"
+    except IOError:
+        print "Error: File not found."
+    except (TypeError, ValueError):
+        print "Error: Could not read private key. Are you sure the key is properly formatted?"
 
 def dec_msg():
     print "We need the private key to decipher the message."
-    (n, d) = read_prv()
-    while True:
-        usr_inp = raw_input("Load message to decipher from file (Y/n)? ")
-        if usr_inp == "" or usr_inp == "y" or usr_inp == "Y":
+
+    try:
+        (n, d) = read_prv()
+    except:
+        return
+
+    if ask_yn("Load message to decipher from file (Y/n)? ", "Y"):
+        try:
             fname = raw_input("Enter message file name: ")
             f = open(fname, 'r')
             msg = f.read()
-            break
-        elif usr_inp == "n" or usr_inp == "N":
-            print "Reading message from command line. Press <c-d> twice to terminate."
-            msg = sys.stdin.read()
-            print
-            break
-        else:
-            print "Invalid option. Enter Y or N.\n"
+        except IOError:
+            print "Error: File not found."
+            return
+    else:
+        print "Reading message from command line. Press <c-d> twice to terminate."
+        msg = sys.stdin.read()
+        print
 
-    msg = msg.replace(begin_cipher_msg, '').replace(end_cipher_msg, '').replace('\n', '').split(key_sp)[:-1]
-    lmsg = map(numb64,msg)
-    print "Deciphering, please wait..."
-    clearnum = map(lambda num: pow(num, d, n), lmsg)
-    cleartxt = ''.join(map(depad, clearnum))
-    print "The deciphered message is:\n"
-    print cleartxt
-    while True:
-        usr_inp = raw_input("Save this message to file (y/N)? ")
-        if usr_inp == "y" or usr_inp == "Y":
-            fname = raw_input("Enter message file name: ")
-            f = open(fname, 'w')
-            f.write(cleartxt)
-            break
-        elif usr_inp == "" or usr_inp == "n" or usr_inp == "N":
-            break
-        else:
-            print "Invalid option. Enter Y or N.\n"
+    try:
+        msg = msg.replace(begin_cipher_msg, '').replace(end_cipher_msg, '').replace('\n', '').split(key_sp)[:-1]
+        lmsg = map(numb64,msg)
+        print "Deciphering, please wait..."
+        clearnum = map(lambda num: pow(num, d, n), lmsg)
+        cleartxt = ''.join(map(depad, clearnum))
+        print "The deciphered message is:\n"
+        print cleartxt
+    except:
+        print "Error: Cannot decipher the message. Are you sure the message is properly formatted?"
+        return
 
-def main():
+    if ask_yn("Save this message to file (y/N)? ", "N"):
+        fname = raw_input("Enter message file name: ")
+        f = open(fname, 'w')
+        f.write(cleartxt)
+
+def interactive():
     print "Z-RSA Cryptosystem Demonstration"
     print "(C) 2011 Qiwei Zuo"
     while True:
@@ -295,4 +303,5 @@ def main():
         else:
             print "Invalid option.\n"
 
-main()
+interactive()
+
