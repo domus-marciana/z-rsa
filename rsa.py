@@ -18,7 +18,7 @@ begin_prv_msg = '=====BEGIN PRIVATE KEY BLOCK=====\nZ-RSAv1\n'
 end_prv_msg   = '=====END PUBLIC KEY BLOCK=====\n'
 begin_cipher_msg = '=====BEGIN CIPHERTEXT BLOCK=====\nZ-RSAv1\n'
 end_cipher_msg = '=====END CIPHERTEXT BLOCK=====\n'
-key_sp = '#####'
+key_sp = '#'
 
 # Miller-Rabin Primality Test
 
