@@ -5,10 +5,8 @@ from textwrap import wrap
 import base64
 import sys
 
-# Dramatis Personae
-llen = 50                                                       # Line length
-k = 10                                                        # Accuracy of the prime test
-test_msg = 'The quick brown fox jumps over the lazy dog.\n'     # A message to test with
+llen = 50                                                         # Line length
+k = 10                                                            # Accuracy of the prime test
 key_min = 1<<1024                                                 # Lower bound of keys
 key_max = 1<<1025                                                 # Upper bound of keys
 
@@ -19,10 +17,6 @@ end_prv_msg   = '=====END PUBLIC KEY BLOCK=====\n'
 begin_cipher_msg = '=====BEGIN ENCIPHERED MESSAGE BLOCK=====\n'
 end_cipher_msg = '=====END ENCIPHERED MESSAGE BLOCK=====\n'
 key_sp = '#####'
-
-# Act I. The Helper Functions
-
-# Scene I. The Testers of Primality
 
 def calc_sr(n):
 	n = n-1
@@ -54,14 +48,12 @@ def is_prime(n):
 			return False
 	return True
 
-# Scene II. The Euclidean Algorithm
-
 def gcd(a, b):
     while b != 0:
         (a, b) = (b, a%b)
     return a
 
-def euclidean(a, b):
+def multinv(a, b):
     print a,b
     (x, lx) = (0, 1)
     while b != 0:
@@ -72,8 +64,6 @@ def euclidean(a, b):
 
 def are_coprime(a, b):
     return gcd(a, b) == 1
-
-# Scene III. Randomizers
 
 def rand_prime(lb, ub):
     a = 0
@@ -87,20 +77,11 @@ def first_coprime(lb, ub, cp_to):
         a = a+1
     return a
 
-# Scene IV. The Humble Encoding Scheme
-
-def dec(b):
-    return int(b, 2)
-
 def b64num(num):
     return base64.b64encode(str(num))
 
 def numb64(b64):
     return long(base64.b64decode(b64))
-
-# Act II. Generating Keys
-
-# Scene I. The Keymaker
 
 def gen_keys(k_min, k_max):
     print "Generating keys, please wait..."
@@ -110,7 +91,7 @@ def gen_keys(k_min, k_max):
     n = p*q
     phi = (p-1)*(q-1)
     e = first_coprime(2, phi-1, phi)
-    d = euclidean(e, phi)
+    d = multinv(e, phi)
     while d<0:
         d = d+phi
 
@@ -141,10 +122,6 @@ def gen_keys(k_min, k_max):
         else:
             print "Invalid option. Enter Y or N.\n"
 
-# Act III. The Enciphering of Messages
-
-# Scene I. A Padding Scheme
-
 def pad(msg):
     lmsg = map(ord, list(msg))
     count = 0
@@ -153,8 +130,6 @@ def pad(msg):
         result = result + i*(256**count)
         count = count+1
     return result
-
-# Scene II. The Business of Enciphering
 
 def read_key():
     while True:
@@ -197,7 +172,7 @@ def enc_msg():
         padded_blk = pad(blk)
         enc_blk = pow(padded_blk, e, n)
         lenc.append(enc_blk)
-        msg = msg[256:]
+        msg = msg[255:]
 
     padded_msg = pad(msg)
     encrypted = pow(padded_msg, e, n)
@@ -225,10 +200,6 @@ def enc_msg():
         else:
             print "Invalid option. Enter Y or N.\n"
 
-# Act IV. The Deciphering of Messages
-
-# Scene I. Decode and De-pad
-
 def depad(num):
     lmsg = []
     while num > 256:
@@ -236,8 +207,6 @@ def depad(num):
         num = num//256
     lmsg.append(num)
     return ''.join(map(chr, lmsg))
-
-# Scene II. The Business of Deciphering
 
 def read_prv():
     while True:
@@ -291,10 +260,6 @@ def dec_msg():
             break
         else:
             print "Invalid option. Enter Y or N.\n"
-
-# Act V. The Main Function
-
-# Scene V. The Main Function
 
 def main():
     print "RSA Cryptosystem Implementation"
