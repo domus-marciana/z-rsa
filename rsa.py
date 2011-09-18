@@ -6,7 +6,8 @@ import base64
 import sys
 import argparse
 
-llen = 50                                                            # Line length k = 10                                                               # Accuracy of the prime test
+llen = 50                                                            # Line length
+k = 10                                                               # Accuracy of the prime test
 # Our keys (p, q) range from 2^1024 to 2^1025.
 key_min = 1<<1024                                                    # Lower bound of keys
 key_max = 1<<1025                                                    # Upper bound of keys
