@@ -12,12 +12,12 @@ k = 10                                                               # Accuracy 
 key_min = 1<<1024                                                    # Lower bound of keys
 key_max = 1<<1025                                                    # Upper bound of keys
 
-begin_pub_msg = '=====BEGIN PUBLIC KEY BLOCK=====\nZ-RSAv1\n'
-end_pub_msg   = '=====END PUBLIC KEY BLOCK=====\n'
-begin_prv_msg = '=====BEGIN PRIVATE KEY BLOCK=====\nZ-RSAv1\n'
-end_prv_msg   = '=====END PUBLIC KEY BLOCK=====\n'
-begin_cipher_msg = '=====BEGIN CIPHERTEXT BLOCK=====\nZ-RSAv1\n'
-end_cipher_msg = '=====END CIPHERTEXT BLOCK=====\n'
+begin_pub_msg = '-----BEGIN PUBLIC KEY BLOCK-----\nZ-RSAv1\n'
+end_pub_msg   = '-----END PUBLIC KEY BLOCK-----\n'
+begin_prv_msg = '-----BEGIN PRIVATE KEY BLOCK-----\nZ-RSAv1\n'
+end_prv_msg   = '-----END PUBLIC KEY BLOCK-----\n'
+begin_cipher_msg = '-----BEGIN CIPHERTEXT BLOCK-----\nZ-RSAv1\n'
+end_cipher_msg = '-----END CIPHERTEXT BLOCK-----\n'
 key_sp = '#'
 
 # Miller-Rabin Primality Test
